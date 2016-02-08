@@ -1,57 +1,79 @@
----
-title: "Reproducible Research: Peer Assessment 1"
+#"Reproducible Research: Peer Assessment 1"
 output: 
   html_document:
     keep_md: true
----
+
 
 
 ## Loading and preprocessing the data
+```{r}
+setwd("/Users/hitanshupande/Documents/Reproducible Research/")
+library(dplyr)
+library(ggplot2)
 data <- read.csv("activity.csv")
+```
+
 
 ## Add a new column with the type of day, weekday or weekend 
+```{r}
 data$weekday <- as.POSIXct(data$date)
 data$weekday <- weekdays(data$weekday)
+```
 
 ## Remove NA values
+```{r}
 cleandata <- data[!is.na(data$steps),]
+```
 
 ## calculate sum of all steps by date
-cleandata <- aggregate(cleandata ~ date, cleandata, sum)
+```{r}
+
 steps.date <- aggregate(steps ~ date, cleandata, sum)
+```
 
 ##Plot a histogram of total steps taken
+```{r}
 hist(steps.date$steps)
-
+```
 
 
 ## What is mean total number of steps taken per day?
 
 ##Mean of steps taken per day
+```{r}
 mean(steps.date$steps)
+```
 
 ##Median of steps taken per day
+```{r}
 median(steps.date$steps)
-
-
-
+```
 
 ## What is the average daily activity pattern?
 
 ##Calculate sum of steps per interval
+```{r}
 intervalAvg <- aggregate(steps ~ interval, cleandata, sum)
+```
 
 ##Plot time series graph of steps per interval
+```{r}
 plot.ts(intervalAvg)
+```
 
 ## Interval with maximum number of steps (835)
+```{r}
 intervalAvg[intervalAvg$steps==max(intervalAvg$steps),]
+```
 
 ##Total number of NA values in dataset
+```{r}
 nrow(data[is.na(data$steps),])
+```
 
 ##Strategy to fill NA values is to replace them with average steps for given time interval
 ##Create a dataframe with only NA values
+```{r}
 data_full <- data
 nas <- is.na(data_full$steps)
 avg_interval <- tapply(data_full$steps, data_full$interval, mean, na.rm=TRUE, simplify=TRUE)
@@ -71,9 +93,9 @@ median_steps_full <- median(steps_full$steps, na.rm = TRUE)
 
 mean_steps_full
 median_steps_full
-
+```
 ## Are there differences in activity patterns between weekdays and weekends?
-
+```{r}
 data_full <- mutate(data_full, weekday = ifelse(data_full$date == "Saturday" | data_full$date == "Sunday", "weekend", "weekday"))
 data_full$weekday <- as.factor(data_full$weekday)
 head(data_full)
@@ -85,4 +107,4 @@ interval_full <- data_full %>%
 s <- ggplot(interval_full, aes(x=interval, y=steps, color = weekday)) +
     geom_line()
 print(s)
-
+```
