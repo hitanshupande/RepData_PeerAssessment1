@@ -7,19 +7,82 @@ output:
 
 
 ## Loading and preprocessing the data
+data <- read.csv("activity.csv")
+
+## Add a new column with the type of day, weekday or weekend 
+data$weekday <- as.POSIXct(data$date)
+data$weekday <- weekdays(data$weekday)
+
+## Remove NA values
+cleandata <- data[!is.na(data$steps),]
+
+## calculate sum of all steps by date
+cleandata <- aggregate(cleandata ~ date, cleandata, sum)
+steps.date <- aggregate(steps ~ date, cleandata, sum)
+
+##Plot a histogram of total steps taken
+hist(steps.date$steps)
 
 
 
 ## What is mean total number of steps taken per day?
 
+##Mean of steps taken per day
+mean(steps.date$steps)
+
+##Median of steps taken per day
+median(steps.date$steps)
+
+
 
 
 ## What is the average daily activity pattern?
 
+##Calculate sum of steps per interval
+intervalAvg <- aggregate(steps ~ interval, cleandata, sum)
 
+##Plot time series graph of steps per interval
+plot.ts(intervalAvg)
 
-## Imputing missing values
+## Interval with maximum number of steps (835)
+intervalAvg[intervalAvg$steps==max(intervalAvg$steps),]
 
+##Total number of NA values in dataset
+nrow(data[is.na(data$steps),])
 
+##Strategy to fill NA values is to replace them with average steps for given time interval
+##Create a dataframe with only NA values
+data_full <- data
+nas <- is.na(data_full$steps)
+avg_interval <- tapply(data_full$steps, data_full$interval, mean, na.rm=TRUE, simplify=TRUE)
+data_full$steps[nas] <- avg_interval[as.character(data_full$interval[nas])]
+
+steps_full <- data_full %>%
+    filter(!is.na(steps)) %>%
+    group_by(date) %>%
+    summarize(steps = sum(steps)) %>%
+## Plot histogram 
+    ggplot(steps_full, aes(x = steps)) +
+    geom_histogram(fill = "firebrick", binwidth = 1000) +
+    labs(title = "Histogram of Steps per day, including missing values", x = "Steps per day", y = "Frequency")
+
+mean_steps_full <- mean(steps_full$steps, na.rm = TRUE)
+median_steps_full <- median(steps_full$steps, na.rm = TRUE)
+
+mean_steps_full
+median_steps_full
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+data_full <- mutate(data_full, weekday = ifelse(data_full$date == "Saturday" | data_full$date == "Sunday", "weekend", "weekday"))
+data_full$weekday <- as.factor(data_full$weekday)
+head(data_full)
+tail(data_full)
+data_full
+interval_full <- data_full %>%
+    group_by(interval, weekday) %>%
+    summarise(steps = mean(steps))
+s <- ggplot(interval_full, aes(x=interval, y=steps, color = weekday)) +
+    geom_line()
+print(s)
+
